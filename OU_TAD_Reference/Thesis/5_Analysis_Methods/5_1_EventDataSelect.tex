@@ -1,0 +1,47 @@
+
+\section{Data Sets and Event Selection}
+
+This study utilized 698 different runs corresponding to zero $mrad$ crossing angle from Run 24 proton-proton collisions. In the context of \ac{RHIC} data taking, the term \textit{Run} refers to a data taking campaign corresponding to a specific calendar year. Each store is divided into multiple (sometime single) time periods of continuous data taking intervals called \textit{runs}. These intervals are determined by the stability of detector and data acquisition and never exceeds one hour time duration.
+
+\subsection{Run Selection}
+For the study of neutral meson both as a function of transverse momentum ($p_T$) and pseudorapidity ($\eta$), we use Run 24 $p+p$ collision from run 47289 to run 51237. They correspond to zero $mrad$ crossing angle and have wide vertex distribution, thus, perfect candidate runs for our study. The analysis presented in this dissertation used the data produced with build tag \textit{ana509\_2024p022\_v001}, which had following physics characteristics:
+
+\begin{itemize}
+    \item Only physics runs were included. Pedestal and Cosmic runs were excluded
+    \item Magnet status: ON 
+    \item Minimum run duration: $> 300~\mathrm{s}$
+    \item Detector QA status: GOLDEN
+    \item Minimum Bias Trigger must be present
+    \item Livetime threshold: $> 70\%$
+    \item Minimum number of reconstructed events: $> 10^{6}$ (1 M) events
+\end{itemize}
+
+
+\subsection{Event Selection}
+
+For our analysis involving transverse momentum ($p_T$), events which have reconstructed primary vertex position satisfying $|z_{\mathrm{vtx}}| < 30~\mathrm{cm}$ were selected. Similarly, while performing analysis as a function of pseudorapidity ($\eta$), events with wider vertex ($|z_{\mathrm{vtx}}| < 200~\mathrm{cm}$) were considered. Another event level selection criteria involved trigger conditions. We used three different trigger data sets in this analysis: the minimum bias (MB) trigger, the Photon 3 GeV trigger, and the Photon 4 GeV trigger.
+
+
+Although we used same number of runs, the integrated luminosity for pseudorapidity ($\eta$) based analysis is different than that for transverse momentum ($p_T$) based analysis. The integrated luminosities for the data sets (for all types of trigger conditions) used for transverse momentum $p_T$ dependent analysis are summarized in Table ~\ref{tab:lumi_pT}.
+
+
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+
+\caption{Event statistics and corresponding integrated luminosities for all trigger types that we use for $p_T$ dependent analysis using Run 24 $p+p$ data.}
+\label{tab:lumi_pT}
+
+\begin{tabular}{c c c}
+\hline
+Trigger Sample & Number of Events ($\times 10^9$) & Integrated Luminosity ($\mathrm{pb}^{-1}$) \\
+\hline
+Minimum Bias & 0.5540 & 0.0244219 \\
+Photon 3 GeV     & 0.5110 & 5.856 \\
+Photon 4 GeV     & 0.5096 & 18.026 \\
+\hline
+\end{tabular}
+\end{table}
+
