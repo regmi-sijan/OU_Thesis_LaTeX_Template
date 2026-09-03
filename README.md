@@ -102,13 +102,12 @@ directly in the compiled PDF:
   the document and let you type a short description for it.
 - Do this for every figure — don't skip any.
 
-**If Acrobat does not currently recognize any content as a `<Figure>`:**
+**If Acrobat does not currently recognize some / any content as a `<Figure>`:**
 
 - Open **All Tools → Prepare for accessibility**.
 - Select **Fix reading order**.
 - In the Reading Order window, enable **Show tables and figures**.
-- Drag a rectangle around the image.
-- Select (or double-click) **Figure** in the Reading Order window.
+- Select (or double-click) **Figure** in the Reading Order window / Drag a rectangle around the image.
 - Select the figure or figure/caption option.
 - Move to the next figure and repeat until all figures are selected.
 - Then follow the previous instructions to add alternate text to each
