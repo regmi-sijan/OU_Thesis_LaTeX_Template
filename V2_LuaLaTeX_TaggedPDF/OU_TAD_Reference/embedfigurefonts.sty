@@ -1,0 +1,293 @@
+%% embedfigurefonts.sty
+%% ===========================================================================
+%% Makes sure every font used inside a PDF or EPS figure is EMBEDDED in the
+%% final thesis PDF, whatever program produced the figure (ROOT, matplotlib,
+%% gnuplot, MATLAB, Origin, Excel, Inkscape, ...).
+%%
+%% WHY
+%%   pdfLaTeX copies the fonts of an included PDF figure into the thesis
+%%   exactly as they are. Many plotting programs (ROOT in particular) only
+%%   *reference* the standard fonts Helvetica, Times and Symbol instead of
+%%   embedding them, so the thesis PDF ends up with non-embedded fonts.
+%%   OU's TAD office and the Acrobat accessibility check require every font
+%%   to be embedded.
+%%
+%% WHAT IT DOES
+%%   Each time \includegraphics loads a .pdf or .eps file, the file is passed
+%%   once through Ghostscript, which embeds every font it uses. Helvetica,
+%%   Times and Symbol are replaced by their metric-identical URW clones, so
+%%   no text moves. The repaired copy is included instead of the original.
+%%   Repaired copies are cached in the folder ./fontfixed-figures/ and named
+%%   after the MD5 checksum of the original, so a figure is processed again
+%%   only when the file itself changes. Raster images (.png, .jpg) contain no
+%%   fonts and are left untouched. The original figure files are never
+%%   modified.
+%%
+%% REQUIREMENTS
+%%   * Shell escape. This is enabled by default on Overleaf. For a local
+%%     build, compile with   lualatex -shell-escape main.tex
+%%     (see the Makefile).
+%%   * Ghostscript on the PATH as "gs". It is preinstalled on Overleaf and
+%%     on most Linux/macOS TeX installations. On Windows, pass the option
+%%     gs=gswin64c (or gs=rungs with TeX Live, gs=mgs with MiKTeX).
+%%   If either requirement is missing, the document still compiles, the
+%%   original figures are used, and a warning says that their fonts may not
+%%   be embedded.
+%%
+%% USAGE (in main.tex, after \usepackage{graphicx})
+%%     \usepackage{embedfigurefonts}
+%%   Package options:
+%%     cachedir=<name>  folder for the repaired copies (default:
+%%                      fontfixed-figures); a plain name, no slashes
+%%     gs=<command>     Ghostscript executable            (default: gs)
+%%     strict           make an unrepairable figure an ERROR rather than a
+%%                      warning (use this for the final TAD build)
+%%     disable          switch the mechanism off completely
+%%   To rebuild every repaired copy, delete the fontfixed-figures folder
+%%   (on Overleaf: Recompile > Recompile from scratch).
+%%   Per figure:
+%%     \includegraphics[embedfonts=false]{file.pdf}   leaves one file as is
+%% ===========================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{embedfigurefonts}%
+  [2026/10/08 v1.0 Embed all fonts of PDF/EPS figures via Ghostscript]
+
+\RequirePackage{graphicx}
+\RequirePackage{pdftexcmds}
+\RequirePackage{kvoptions}
+
+\SetupKeyvalOptions{family=EFF,prefix=EFF@}
+\DeclareStringOption[fontfixed-figures]{cachedir}
+\DeclareStringOption[gs]{gs}
+\DeclareBoolOption{strict}
+\DeclareBoolOption{disable}
+\ProcessKeyvalOptions*
+
+% Several gs-made figures on one page would otherwise trigger the harmless
+% pdfTeX warning "multiple pdfs with page group included in a single page".
+\ifdefined\pdfsuppresswarningpagegroup
+  \pdfsuppresswarningpagegroup=1\relax
+\fi
+
+% ---------------------------------------------------------------------------
+% Per-figure switch:  \includegraphics[embedfonts=false]{...}
+% ---------------------------------------------------------------------------
+\newif\ifEFF@this \EFF@thistrue
+\define@key{Gin}{embedfonts}[true]{\csname EFF@this#1\endcsname}
+
+% ---------------------------------------------------------------------------
+% Bookkeeping
+% ---------------------------------------------------------------------------
+\newcount\EFF@nnew    % repaired during this compile
+\newcount\EFF@ncache  % reused from the cache
+\newcount\EFF@nfail   % could not be repaired
+\gdef\EFF@failedlist{}
+\newif\ifEFF@dirmade
+\newif\ifEFF@valid
+
+% ---------------------------------------------------------------------------
+% Ghostscript settings
+%   /prepress + EmbedAllFonts  embed (and subset) every font
+%   NeverEmbed [ ]             also embed the "base 14" fonts (Helvetica,
+%                              Times, Symbol, ...), which gs skips otherwise
+%   Downsample.../Filter...    keep embedded bitmaps lossless, untouched
+%   CompatibilityLevel=1.5     same PDF version pdfTeX writes
+% ---------------------------------------------------------------------------
+\edef\EFF@gsopts{%
+  -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite
+  -dPDFSETTINGS=/prepress -dCompatibilityLevel=1.5
+  -dEmbedAllFonts=true -dSubsetFonts=true -dAutoRotatePages=/None
+  -dDownsampleColorImages=false -dDownsampleGrayImages=false
+  -dDownsampleMonoImages=false -dAutoFilterColorImages=false
+  -dAutoFilterGrayImages=false -dColorImageFilter=/FlateEncode
+  -dGrayImageFilter=/FlateEncode}
+\def\EFF@gsps{"<</NeverEmbed [ ]>> setdistillerparams"}
+\def\EFF@opt@pdf{-dUseCropBox}  % keep the visible area of a PDF figure
+\def\EFF@opt@eps{-dEPSCrop}     % crop an EPS figure to its BoundingBox
+
+% ---------------------------------------------------------------------------
+% Helpers
+% ---------------------------------------------------------------------------
+\ExplSyntaxOn
+\str_new:N \l__eff_name_str
+% \EFF@flatten{<path/without/ext>} -> \EFF@flat, a file name without
+% directory separators, spaces or quotes (keeps the cache folder flat and
+% the shell command safe).
+\cs_new_protected:Npn \EFF@flatten #1
+  {
+    \str_set:Nn \l__eff_name_str {#1}
+    \str_replace_all:Nnn \l__eff_name_str { / } { __ }
+    \str_replace_all:Nnn \l__eff_name_str { \c_backslash_str } { __ }
+    \str_replace_all:Nnn \l__eff_name_str { ~ } { _ }
+    \str_replace_all:Nnn \l__eff_name_str { " } { }
+    \str_replace_all:Nnn \l__eff_name_str { ' } { }
+    \str_replace_all:Nnn \l__eff_name_str { : } { _ }
+    \tl_set_eq:NN \EFF@flat \l__eff_name_str
+  }
+\ExplSyntaxOff
+
+% \EFF@checkvalid{<file>}: \EFF@validtrue if <file> exists and ends with
+% "%%EOF", i.e. Ghostscript finished writing it. A run that was interrupted
+% therefore never leaves a broken figure in the cache.
+\def\EFF@checkvalid#1{%
+  \EFF@validfalse
+  \IfFileExists{#1}{%
+    \edef\EFF@size{\pdf@filesize{#1}}%
+    \ifx\EFF@size\@empty\else
+      \ifnum\EFF@size>64 %
+        \edef\EFF@tail{\pdf@filedump{\numexpr\EFF@size-64\relax}{64}{#1}}%
+        % 2525454F46 is "%%EOF" in hex (detokenized: \pdf@filedump returns
+        % characters of category "other")
+        \edef\EFF@tmp{\noexpand\in@{\detokenize{2525454F46}}{\EFF@tail}}%
+        \EFF@tmp
+        \ifin@ \EFF@validtrue \fi
+      \fi
+    \fi
+  }{}%
+}
+
+\def\EFF@fail#1{%
+  \global\advance\EFF@nfail\@ne
+  \xdef\EFF@failedlist{\EFF@failedlist\MessageBreak\space\space#1}%
+  \ifEFF@strict
+    \PackageError{embedfigurefonts}{%
+      Could not embed the fonts of figure\MessageBreak
+      `#1'.\MessageBreak
+      Details: \EFF@dst.log}{%
+      Check that Ghostscript is installed (option gs=...) and that\MessageBreak
+      shell escape is enabled. The original file will be used.}%
+  \else
+    \PackageWarning{embedfigurefonts}{%
+      Could not embed the fonts of figure\MessageBreak
+      `#1'.\MessageBreak
+      The ORIGINAL file is used, so its fonts may NOT\MessageBreak
+      be embedded. Details: \EFF@dst.log}%
+  \fi
+}
+
+% ---------------------------------------------------------------------------
+% The hook. graphics.sty passes every figure through
+%   \Gin@setfile{<type>}{<read ext>}{<file>}
+% after it has resolved \graphicspath and the file extension, with the full
+% path in \Gin@base and the extension in \Gin@ext.
+% ---------------------------------------------------------------------------
+\def\EFF@setfile#1#2#3{%
+  \let\EFF@kind\@empty
+  \ifGin@draft\else
+    \ifEFF@this
+      \edef\EFF@tmp{\lowercase{\def\noexpand\EFF@ext{\Gin@ext}}}\EFF@tmp
+      \ifnum\pdf@strcmp{\EFF@ext}{.pdf}=\z@ \def\EFF@kind{pdf}\fi
+      \ifnum\pdf@strcmp{\EFF@ext}{.eps}=\z@ \def\EFF@kind{eps}\fi
+    \fi
+  \fi
+  \ifx\EFF@kind\@empty
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+  {\EFF@orig@setfile{#1}{#2}{#3}}%
+  {\EFF@process{#1}{#2}{#3}}%
+}
+
+\def\EFF@process#1#2#3{%
+  \edef\EFF@src{\Gin@base\Gin@ext}%
+  \expandafter\EFF@flatten\expandafter{\Gin@base}%
+  \edef\EFF@sum{\pdf@filemdfivesum{\EFF@src}}%
+  \edef\EFF@dstbase{\EFF@cachedir/\EFF@flat-\EFF@sum}%
+  \edef\EFF@dst{\EFF@dstbase.pdf}%
+  \ifcsname EFF@seen@\EFF@dst\endcsname
+    % This file was already handled earlier in this compile: reuse verdict.
+    \ifcsname EFF@ok@\EFF@dst\endcsname
+      \EFF@validtrue
+    \else
+      \EFF@validfalse
+    \fi
+  \else
+    \global\expandafter\let\csname EFF@seen@\EFF@dst\endcsname\@empty
+    % Is a complete repaired copy of exactly this file already cached?
+    \EFF@checkvalid{\EFF@dst}%
+    \ifEFF@valid
+      \global\advance\EFF@ncache\@ne
+    \else
+      \ifEFF@dirmade\else
+        % plain "mkdir <name>" works in both sh and cmd.exe; an "already
+        % exists" message is harmless
+        \pdf@system{mkdir "\EFF@cachedir"}%
+        \global\EFF@dirmadetrue
+      \fi
+      \PackageInfo{embedfigurefonts}{%
+        Embedding fonts: `\EFF@src'\MessageBreak -> `\EFF@dst'}%
+      \pdf@system{%
+        \EFF@gs\space\EFF@gsopts\space
+        \csname EFF@opt@\EFF@kind\endcsname\space
+        -sOutputFile="\EFF@dst"\space
+        -c \EFF@gsps\space
+        -f "\EFF@src" > "\EFF@dst.log" 2>&1}%
+      \EFF@checkvalid{\EFF@dst}%
+      \ifEFF@valid
+        \global\advance\EFF@nnew\@ne
+      \else
+        \EFF@fail{\EFF@src}%
+      \fi
+    \fi
+    \ifEFF@valid
+      \global\expandafter\let\csname EFF@ok@\EFF@dst\endcsname\@empty
+    \fi
+  \fi
+  \ifEFF@valid
+    \let\Gin@base\EFF@dstbase
+    \def\Gin@ext{.pdf}%
+    \edef\EFF@next{\noexpand\EFF@orig@setfile{pdf}{.pdf}{\EFF@dst}}%
+  \else
+    \def\EFF@next{\EFF@orig@setfile{#1}{#2}{#3}}%
+  \fi
+  \EFF@next
+}
+
+% ---------------------------------------------------------------------------
+% Installation. This runs at the very end of \begin{document}, after
+% pdftex.def has loaded epstopdf, so this hook sees .eps files first.
+% ---------------------------------------------------------------------------
+\def\EFF@install{%
+  \let\EFF@orig@setfile\Gin@setfile
+  \let\Gin@setfile\EFF@setfile
+  \AtEndDocument{%
+    \ifnum\EFF@nfail>\z@
+      \PackageWarningNoLine{embedfigurefonts}{%
+        \the\EFF@nfail\space figure(s) could NOT be repaired; their fonts
+        may\MessageBreak not be embedded:\EFF@failedlist}%
+    \fi
+    \PackageInfo{embedfigurefonts}{%
+      PDF/EPS figure files with all fonts embedded:\MessageBreak
+      \the\EFF@nnew\space repaired in this compile,
+      \the\EFF@ncache\space already repaired earlier\MessageBreak
+      (cached in `\EFF@cachedir/')\@gobble}%
+  }%
+}
+
+\ifEFF@disable
+  \PackageInfo{embedfigurefonts}{Disabled by package option}%
+\else
+  \ifnum\pdf@shellescape=\@ne
+    \ifdefined\AddToHook
+      \AddToHook{begindocument/end}{\EFF@install}%
+    \else
+      \AtBeginDocument{\EFF@install}%
+    \fi
+  \else
+    \ifEFF@strict
+      \PackageError{embedfigurefonts}{%
+        Shell escape is not enabled}{%
+        Fonts inside PDF/EPS figures cannot be embedded without it.\MessageBreak
+        Compile with: lualatex -shell-escape main.tex}%
+    \else
+      \PackageWarningNoLine{embedfigurefonts}{%
+        Shell escape is not enabled, so the fonts inside\MessageBreak
+        PDF/EPS figures will NOT be embedded. Compile with\MessageBreak
+        \space\space lualatex -shell-escape main.tex\MessageBreak
+        (Overleaf enables shell escape automatically)}%
+    \fi
+  \fi
+\fi
+
+\endinput

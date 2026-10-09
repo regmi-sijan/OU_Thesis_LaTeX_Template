@@ -1,0 +1,271 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% This file provides a template that can be used in concert with the
+%% ohio-etd class to generate an electronic thesis or dissertation which
+%% meets the formatting requirements at Ohio University.
+%%
+%% To use the template, copy this file (template.tex) and ohio-etd.cls into
+%% the same directory and edit this template as required.  Reference
+%% ohio-etd.pdf for additional instructions on using this class.
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% Load the class. Available options are: numbered, pdftex, cmfont,
+%% singlespacetables, draft, 11pt, 12pt, leqno, and fleqn
+
+%% ===========================================================================
+%% ACCESSIBLE (TAGGED) PDF -- required for figure alt text
+%% ---------------------------------------------------------------------------
+%% \TaggedPDFtrue  (default): tagged PDF. Every figure carries the alt text
+%%                   given with \includegraphics[alt={...}]{...}; headings,
+%%                   lists, tables, links, formulas and the language are tagged,
+%%                   so Acrobat's accessibility checks for them pass. Submit this.
+%% \TaggedPDFfalse : untagged PDF (faster drafts). Acrobat's "Figures alternate
+%%                   text" check always FAILS on an untagged PDF.
+%% Compile with LuaLaTeX (Overleaf: Menu > Settings > Compiler > LuaLaTeX,
+%% TeX Live 2025 or newer); pdfLaTeX also works. A tagged build needs more than
+%% the 10 s Overleaf's FREE plan allows: build it locally (make) or on a plan
+%% with a longer compile timeout. See README.md.
+%% This block must stay ABOVE \documentclass.
+%% ===========================================================================
+\newif\ifTaggedPDF
+\TaggedPDFtrue    % <-- true: accessible build with alt text (default); false: fast drafts
+\ifTaggedPDF
+  \DocumentMetadata{
+    lang       = en-US,
+    pdfversion = 1.7,
+    tagging    = on,
+  }
+\else
+  \DocumentMetadata{
+    lang       = en-US,
+    pdfversion = 1.7,
+  }
+\fi
+\documentclass[numbered]{ohio-etd} % (no "pdftex" option: PDF output is detected automatically)
+
+% unicode to text mapping (for accessibility test); needed for the Type 1
+% fonts (all fonts under pdfLaTeX, the math fonts under LuaLaTeX)
+\ifdefined\pdfgentounicode        % pdfLaTeX
+  \input{glyphtounicode}\pdfgentounicode=1
+\else\ifdefined\pdfvariable       % LuaLaTeX
+  {\ifdefined\pdfglyphtounicode\else % (older LuaLaTeX formats)
+     \def\pdfglyphtounicode{\pdfextension glyphtounicode }\fi
+   \input{glyphtounicode}}\pdfvariable gentounicode=1
+\fi\fi
+
+%% Other packages that may be of use.  Delete or comment out (using a
+%% percent sign in the first column) if they are not desired.  Reference
+%% the corresponding documentation for more information on how to use these
+%% packages.
+
+\usepackage[square,sort&compress,numbers]{natbib} % Provides formatting for
+                                                  % citations
+\usepackage{textcomp} % Provides math symbols that can be used in text mode
+\usepackage{amssymb}  % Provides additional AMS math symbols.  Note that
+                      % amsmath is loaded as part of the ohio-etd class
+\usepackage{bm}       % Provides bold-faced math symbols
+\usepackage{booktabs} % Provides improved table formatting
+\usepackage{comment}
+\usepackage{float}
+\usepackage{rotating} % for rotating table
+
+\usepackage{ragged2e}
+\usepackage{microtype}
+
+% \usepackage{hyperref}   % comment out; ohio-etd.cls already loads it
+\usepackage{xurl}
+%\usepackage[normalem]{ulem}
+
+\usepackage{xcolor}
+\usepackage{wasysym}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% For subfigures only (minimal interference with ohio-etd)
+% this might invoke warning on compilation so should use carefully
+% \usepackage{caption}
+% \captionsetup{compatibility=false}
+% \usepackage{subcaption}
+% % Optional: ensure only subcaptions get any settings (leave normal captions alone)
+% \captionsetup[sub]{}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{pdfpages}
+\usepackage{import}   % helps with folders
+\usepackage{dcolumn}  % Provides table columns aligned at decimal points
+\usepackage{multirow} % Provides table elements spanning multiple rows
+\usepackage{graphicx} % Standard package to incorporate graphics
+\usepackage{embedfigurefonts} % Embeds ALL fonts used inside PDF/EPS figures
+                              % (ROOT, matplotlib, gnuplot, ...), as required
+                              % by TAD. Needs shell escape: automatic on
+                              % Overleaf; locally compile with
+                              %   lualatex -shell-escape main.tex
+                              % Options and details: embedfigurefonts.sty
+\usepackage{enumitem}
+\usepackage[printonlyused]{acronym} % Provides a method for incorporating
+                                    % acronyms and building an acronym list
+
+\graphicspath{{figures/}} % Allows graphics files to be stored in a
+                          % separate directory
+
+%% Required front matter definitions
+
+\degree    {PhD}              % MS, MA, MCTP, or PhD
+\graduation{August}{2026}    % May, August, or December 
+
+\title{Measurement of \texorpdfstring{$\pi^{0}$}{pi0} and \texorpdfstring{$\eta$}{eta} Meson Production in \texorpdfstring{$p+p$}{p+p} Collisions at \texorpdfstring{$\sqrt{s} = 200~\mathrm{GeV}$}{sqrt(sNN) = 200 GeV} With sPHENIX}
+
+
+\author    {Sijan}{Regmi}
+
+% this is to pass accessibility test in adobe acrobat (pro)
+% the pdf title is title of thesis (and not in latex)
+% pdf author is the author of the thesis
+% others will remain same as this (unless if there is any change(s) needed)
+
+\hypersetup{
+    pdftitle={Measurement of pi0 and eta Meson Production in p+p Collisions at sqrt(sNN) = 200 GeV With sPHENIX},
+    pdfauthor={Sijan Regmi},
+    pdflang={en-US},
+    pdfdisplaydoctitle=true
+}
+
+\advisor   {Justin E. Frantz}{Associate Professor, Physics and Astronomy Department}
+\dean      {Matthew Ando}{Dean, College of Arts and Sciences}
+
+\program   {Physics}            % e.g. Electrical Engineering
+\department{Department of Physics and Astronomy} % e.g. School of Electrical Engineering 
+                                     %      and Computer Science
+\college   {College of Arts and Sciences}   % e.g. Russ College of Engineering and
+                                     %      Technology
+\justifying
+%\abstract{Insert your abstract here}
+\abstract{\input{frontmatter/abstract.tex}}
+
+%% Optional front matter definitions.  Delete or comment out if not needed
+
+%\coadvisor {Coadvisor's Full Name}{Coadvisor's Full Title}
+
+\dedication{% vertically centered, italic
+\vspace*{\fill}
+\begin{center}\itshape
+\input{frontmatter/dedication.tex}
+\end{center}
+\vspace*{\fill}}
+
+%\acknowledgments{Insert your acknowledgments here or comment out this line.}
+%% If you prefer to provide "acknowledgements" instead (note the added "e"
+%% between the "g" and the "m") then add the "e" in the macro name so that
+%% it reads "\acknowledgements".}
+
+\acknowledgements{\input{frontmatter/acknowledgments.tex}}
+
+
+%% Additional "lists" can be added to the end of the front matter using the
+%% \addlistof macro.  For example:
+\addlistof{Symbols}{\input{frontmatter/symbols.tex}}
+%% Note that the command "\input{symbols}" can be used if the symbol list is
+%% contained in a separate file called "symbols.tex"}
+
+%\addlistof{Acronyms}{Insert your list of acronyms here or comment out this line}
+\addlistof{Acronyms}{\input{frontmatter/acronyms.tex}}
+
+%% Use "\input{acronyms}" if the acronym list is in a separate file called
+%% "acronyms.tex".  Note that the formatting generated by the acronym package
+%% can be forced into singlespaced text by inserting "\setlength\itemsep{0pt}
+%% \setlength\parskip{0pt}" into the "acronym" environment.} 
+
+
+%% For documents created by government employees as part of their
+%% employment.  The wording of the disclaimer can be specified using an
+%% option.  See the documentation for more information.
+
+% \govtdisclaimer    
+
+% \notables  % Prevent a list of tables from being created
+% \nofigures % Prevent a list of figures from being created
+
+\setcounter{tocdepth}{2}
+\begin{document}
+
+\makefrontmatter    % Creates all of the front matter pages.
+
+%% Body of the text follows, using \chapter, \section, \subsection,
+%% \subsubsection, \paragraph, and \subparagraph to generate the
+%% section headings.  For convenience, it may be useful to break the
+%% full document into separate files, perhaps divided by chapters.  In
+%% that case, the files would be loaded here using "\input{filename}"
+
+
+% === Chapter 1 ===
+\chapter{Introduction and Physics Motivation}
+\import{Thesis/1_Intro_and_Motivation/}{1_1_PhysicsVariable.tex}
+
+
+% === Chapter 2 ===
+\chapter{Theoretical Framework}
+\import{Thesis/2_Theoretical_Framework/}{2_1_QCD_Overview.tex}
+
+
+% === Chapter 3 ===
+\chapter{Experimental Setup}
+\import{Thesis/3_Experimental_Setup/}{3_1_RHIC_Facility.tex}
+
+
+% === Chapter 4 ===
+\chapter{Electromagnetic Calorimeter Calibration}
+\import{Thesis/4_EMCal_Calibration/}{4_1_EMCal_Calibration.tex}
+
+
+% === Chapter 5 ===
+\chapter {Neutral Meson Analysis}
+\import{Thesis/5_Analysis_Methods/}{5_1_EventDataSelect.tex}
+
+
+% === Chapter 6 ===
+\chapter{Results}
+\import{Thesis/6_Results/}{6_1_InvMassSpectra.tex}
+
+
+% === Chapter 7 ===
+\chapter{Discussion and Conclusion}
+\import{Thesis/7_Discussion_and_Conclusion/}{7_1_Result_Summary.tex}
+
+
+\references{
+
+  % ---------------------------------------------------------
+  % References only:
+  % URLs and DOIs = blue + clickable + underlined
+  % ---------------------------------------------------------
+
+  \hypersetup{
+    pdfborder={0 0 1},
+    pdfborderstyle={/S/U/W 1},
+    urlbordercolor=blue
+  }
+
+  % Website URLs:
+  % blue text; xurl handles line breaking
+  \renewcommand\UrlFont{\color{blue}\normalfont}
+
+  % DOI links produced by alphaurl_etd.bst:
+  % make the visible DOI text blue
+  \let\oldhref\href
+  \renewcommand{\href}[2]{%
+    \oldhref{#1}{\textcolor{blue}{#2}}%
+  }
+
+  \bibliographystyle{alphaurl_etd}
+  \bibliography{references.bib}
+}
+
+
+\appendix  % Indicates the transition from chapters to appendices.
+
+\input{appendices/appA.tex}
+\input{appendices/appB.tex}
+\input{appendices/appC.tex}
+
+
+\end{document}

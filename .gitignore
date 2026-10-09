@@ -1,0 +1,37 @@
+# macOS / Windows
+.DS_Store
+._*
+__MACOSX/
+Thumbs.db
+desktop.ini
+
+# Editors
+*~
+*.bak
+*.swp
+.vscode/
+
+# LaTeX build files
+*.aux
+*.bcf
+*.run.xml
+*.synctex
+*.bbl
+*.blg
+*.dvi
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.synctex.gz
+*.synctex(busy)
+*.toc
+*.xdv
+
+# Compiled thesis (rebuild it from the source)
+**/OU_TAD_Reference/main.pdf
+
+# Font-repaired copies of PDF/EPS figures made by embedfigurefonts.sty (V2)
+fontfixed-figures/

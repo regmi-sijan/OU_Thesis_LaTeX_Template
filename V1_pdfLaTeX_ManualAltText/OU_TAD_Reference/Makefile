@@ -2,17 +2,17 @@
 # Default LaTeX makefile
 # Samuel Jero <sj323707@ohio.edu>
 ###############################################################################
-TEXFILE:=template
-OUTPUT:=template.pdf
+TEXFILE:=main
+OUTPUT:=main.pdf
 
 
 all: pdf
 	
 pdf: 	
 	pdflatex ${TEXFILE}.tex
-	#bibtex ${TEXFILE}.aux
-	#pdflatex ${TEXFILE}.tex
-	#pdflatex ${TEXFILE}.tex
+	bibtex ${TEXFILE}.aux
+	pdflatex ${TEXFILE}.tex
+	pdflatex ${TEXFILE}.tex
 	#mv ${TEXFILE}.pdf ${OUTPUT}
 
 clean:

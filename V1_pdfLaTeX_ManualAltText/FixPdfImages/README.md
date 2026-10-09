@@ -2,14 +2,15 @@
 
 ## Purpose
 
-This folder holds the figures used in the thesis in PDF form, plus a small
-utility script (`FixImages.sh`) that repairs a font-embedding problem that
-PDF figures can develop depending on how they were originally generated.
+This folder holds a small utility script (`FixImages.sh`) that repairs a
+font-embedding problem that PDF figures can develop depending on how they
+were originally generated, plus a few sample PDF figures to try it on. (The
+example thesis itself uses PNG figures; these PDFs are not included in it.)
 
 ## Why PDF for figures instead of PNG/JPG
 
-PDF is used for the thesis figures (rather than raster formats like PNG or
-JPG) because it is a vector/print-oriented format: text, lines, and curves
+PDF is the better format for thesis figures (rather than raster formats like
+PNG or JPG) because it is a vector/print-oriented format: text, lines, and curves
 stay sharp at any zoom level or print size, instead of pixelating. This
 matters for a document that may be printed, zoomed into during defense, or
 archived long-term by the graduate college. LaTeX also handles PDF figures
@@ -67,8 +68,7 @@ with a cryptic error).
 
 At the end it prints a summary of how many files were fixed vs. already
 fine, and reminds you to spot-check the fixed PDFs visually before
-replacing the originals (or before pointing `\includegraphics` at the
-`fixed_images/` versions).
+copying them into `OU_TAD_Reference/Images/` in place of the originals.
 
 ### Usage
 
@@ -82,6 +82,9 @@ replacing the originals (or before pointing `\includegraphics` at the
 # custom input and output folders
 ./FixImages.sh /path/to/input /path/to/output
 ```
+
+If your shell says "Permission denied", run the script as `bash FixImages.sh`
+instead (or make it executable once with `chmod +x FixImages.sh`).
 
 The script resolves its default `input`/`fixed_images` folders relative to
 its own location, so it behaves the same regardless of which directory you
@@ -117,8 +120,8 @@ failing partway through a run.
 ## Folder contents
 
 - `FixImages.sh` — the font-embedding fix script described above.
-- `input/` — original figure PDFs (`alpha_coupling.pdf`,
-  `eta_spectrum_fit_sPHENIX.pdf`, `pi0_spectrum_fit_sPHENIX.pdf`), some of
-  which have font-embedding issues.
+- `input/` — sample figure PDFs (`alpha_coupling.pdf`,
+  `eta_spectrum_fit_sPHENIX.pdf`, `pi0_spectrum_fit_sPHENIX.pdf`); the last
+  two have font-embedding issues.
 - `fixed_images/` — output of the script; contains the repaired versions
   of the figures that needed a fix.
